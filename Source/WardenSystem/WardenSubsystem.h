@@ -39,14 +39,63 @@ public:
 
 #pragma region API
 
+public:
+
+    /** @public Registering a cluster with a delegate timer. ONLY with UObject **/
+    void RegisterClusterDataTimerDelegate(const FString& TagCluster, FTimerDelegate TimerDelegate);
+
+    /** @public Registering a cluster with a delegate timer STATIC. ONLY with UObject **/
+    static void RegisterClusterDataTimerDelegateStatic(UObject* WorldContextObject, const FString& TagCluster, FTimerDelegate TimerDelegate);
+
+    /** @public Registering a cluster with a delegate callback. ONLY with UObject **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    void RegisterClusterDataCallback(FString TagCluster, FWSCallbackSignature Callback);
+
+    /** @public Registering a cluster with a delegate callback STATIC. ONLY with UObject **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    static void RegisterClusterDataCallbackStatic(UObject* WorldContextObject, FString TagCluster, FWSCallbackSignature Callback);
+    
+    /** @public Removing a cluster from verification **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    void UnRegisterClusterTag(FString TagCluster);
+
+    /** @public Removing a cluster from verification STATIC **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    static void UnRegisterClusterTagStatic(UObject* WorldContextObject, FString TagCluster);
+
+    /** @public Removing a cluster from verification **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    void UnRegisterClusterTagByObject(FString TagCluster, UObject* Object);
+
+    /** @public Removing a cluster from verification STATIC **/
+    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    static void UnRegisterClusterTagByObjectStatic(UObject* WorldContextObject, FString TagCluster, UObject* Object);
+
 private:
 
+    /** @private  **/
+    void RegisterCluster_Internal(const FString& TagCluster, FClusterData_WS& Data);
+
+    /** @private  **/
+    void VerifyCluster();
+    
 #pragma endregion
 
 #pragma region Data
 
 private:
+
+    /** @private Index **/
+    int32 TargetIndex{0};
     
-    
+    /** @private Indexing clusters **/
+    TArray<FString> ArrayIndexCluster;
+
+    /** @private Cluster **/
+    TMap<FString, TArray<FClusterData_WS>> ClusterContainer;
+
+    /** @private Timer handle **/
+    FTimerHandle TimerHandle_VerifyCluster;
+
 #pragma endregion
 };
