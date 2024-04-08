@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "WardenSystemDataTypes.h"
+#include "WardenSystem/WardenSystemDataTypes.h"
 #include "WardenSubsystem.generated.h"
 
+class UClusterWarObject;
 /**
- * 
+ * @class The system implies control over clustering with callbacks
  */
 UCLASS()
 class WARDENSYSTEM_API UWardenSubsystem : public UTickableWorldSubsystem
@@ -74,28 +75,25 @@ public:
 private:
 
     /** @private  **/
+    UClusterWarObject* FindClusterWarObject(const FString& TagCluster);
+
+    /** @private  **/
+    UClusterWarObject* FindExistClusterWarObject(const FString& TagCluster = TEXT(""));
+    
+    /** @private  **/
     void RegisterCluster_Internal(const FString& TagCluster, FClusterData_WS& Data);
 
     /** @private  **/
-    void VerifyCluster();
-    
+    UClusterWarObject* CreateNewCluster();
+
 #pragma endregion
 
 #pragma region Data
 
 private:
 
-    /** @private Index **/
-    int32 TargetIndex{0};
+    UPROPERTY()
+    TArray<UClusterWarObject*> ClusterWarObjects;
     
-    /** @private Indexing clusters **/
-    TArray<FString> ArrayIndexCluster;
-
-    /** @private Cluster **/
-    TMap<FString, TArray<FClusterData_WS>> ClusterContainer;
-
-    /** @private Timer handle **/
-    FTimerHandle TimerHandle_VerifyCluster;
-
 #pragma endregion
 };
