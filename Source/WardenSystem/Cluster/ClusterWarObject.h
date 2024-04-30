@@ -20,7 +20,10 @@ class WARDENSYSTEM_API UClusterWarObject : public UObject
 public:
 
     /** @public **/
-    void RunCluster();
+    virtual void Tick(float Time);
+
+    /** @public **/
+    virtual void RunCluster();
 
     /** @public **/
     void RegisterClusterData(const FString& TagCluster, FClusterData_WS& Data);
@@ -56,12 +59,12 @@ private:
 #pragma region Data
 
 private:
+
+    /** @private Current accumulated call time **/
+    float CallTime{0.0f};
     
     /** @private Index **/
     int32 TargetIndex{0};
-    
-    /** @private Indexing clusters **/
-    TArray<FString> ArrayIndexCluster;
 
     /** @private Cluster **/
     TMap<FString, TArray<FClusterData_WS>> ClusterContainer;

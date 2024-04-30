@@ -2,15 +2,18 @@
 
 
 #include "WardenSubsystem.h"
+
+#include "Algo/ForEach.h"
 #include "WardenSystem/Cluster/ClusterWarObject.h"
+#include "WardenSystem/Settings/WardenSettings.h"
 
 #pragma region Default
 
 UWardenSubsystem* UWardenSubsystem::Get(UWorld* World)
 {
-	if (!World) return nullptr;
-	if (CLOG_WARDEN_SYSTEM(!World, "World is nullptr")) return nullptr;
-	return World->GetSubsystem<UWardenSubsystem>();
+    if (!World) return nullptr;
+    if (CLOG_WARDEN_SYSTEM(!World, "World is nullptr")) return nullptr;
+    return World->GetSubsystem<UWardenSubsystem>();
 }
 
 UWardenSubsystem* UWardenSubsystem::GetWardenSubsystemSingleton(UObject* Context)
@@ -23,7 +26,17 @@ UWardenSubsystem* UWardenSubsystem::GetWardenSubsystemSingleton(UObject* Context
 
 void UWardenSubsystem::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
+
+    const int32 StableFPS = UWardenSettings::GetStableFPSStatic();
+    const float Approx = (1.0f / static_cast<float>(StableFPS)) * 100.0f;
+    const float Time = DeltaTime * Approx;
+
+    for (auto* Cluster : ClusterWarObjects)
+    {
+        if (!Cluster) continue;
+        Cluster->Tick(Time);
+    }
 
 #if !UE_BUILD_SHIPPING
 
@@ -61,6 +74,11 @@ void UWardenSubsystem::Tick(float DeltaTime)
 #endif
 }
 
+bool UWardenSubsystem::IsTickableInEditor() const
+{
+    return true;
+}
+
 TStatId UWardenSubsystem::GetStatId() const
 {
     return TStatId();
@@ -68,20 +86,20 @@ TStatId UWardenSubsystem::GetStatId() const
 
 void UWardenSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	Super::Initialize(Collection);
-    
+    Super::Initialize(Collection);
+
 }
 
 void UWardenSubsystem::Deinitialize()
 {
-	Super::Deinitialize();
+    Super::Deinitialize();
 }
 
 #pragma endregion
 
 #pragma region API
 
-void UWardenSubsystem::RegisterClusterDataTimerDelegate(const FString& TagCluster, FTimerDelegate TimerDelegate)
+void UWardenSubsystem::RegisterClusterDataTimerDelegate(const FString& TagCluster, const FTimerDelegate& TimerDelegate)
 {
     if (CLOG_WARDEN_SYSTEM(!TimerDelegate.GetUObject(), "Timer delegate is not UObject")) return;
     if (CLOG_WARDEN_SYSTEM(TagCluster.IsEmpty(), "Tag cluster is empty")) return;
@@ -94,7 +112,7 @@ void UWardenSubsystem::RegisterClusterDataTimerDelegate(const FString& TagCluste
 }
 
 void UWardenSubsystem::RegisterClusterDataTimerDelegateStatic(UObject* WorldContextObject, const FString& TagCluster,
-    FTimerDelegate TimerDelegate)
+    const FTimerDelegate& TimerDelegate)
 {
     if (UWardenSubsystem* WardenSubsystem = UWardenSubsystem::GetWardenSubsystemSingleton(WorldContextObject))
     {
@@ -142,7 +160,7 @@ void UWardenSubsystem::UnRegisterClusterTagByObject(FString TagCluster, UObject*
 {
     if (CLOG_WARDEN_SYSTEM(!Object, "Object is nullptr")) return;
     if (CLOG_WARDEN_SYSTEM(TagCluster.IsEmpty(), "Tag cluster is empty")) return;
-    
+
     if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
     {
         ClusterWarObject->UnRegisterClusterData(TagCluster, Object);
@@ -155,6 +173,20 @@ void UWardenSubsystem::UnRegisterClusterTagByObjectStatic(UObject* WorldContextO
     {
         WardenSubsystem->UnRegisterClusterTagByObject(TagCluster, Object);
     }
+}
+
+bool UWardenSubsystem::IsExistClusterByTag(FString TagCluster)
+{
+    return FindClusterWarObject(TagCluster) != nullptr;
+}
+
+bool UWardenSubsystem::IsExistClusterByTagStatic(UObject* WorldContextObject, FString TagCluster)
+{
+    if (UWardenSubsystem* WardenSubsystem = UWardenSubsystem::GetWardenSubsystemSingleton(WorldContextObject))
+    {
+        return WardenSubsystem->FindClusterWarObject(TagCluster) != nullptr;
+    }
+    return false;
 }
 
 UClusterWarObject* UWardenSubsystem::FindClusterWarObject(const FString& TagCluster)

@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.2",
 	"FriendlyName": "WardenSystem",
 	"Description": "Improved system for monitoring function calls for objects similar to SignificalManager",
 	"Category": "World",

@@ -17,20 +17,28 @@ class WARDENSYSTEM_API UWardenSettings : public UDeveloperSettings
 public:
 
     /** @public  **/
-    UFUNCTION(BlueprintPure, Category = "UWardenSettings")
+    UFUNCTION(BlueprintPure, Category = "API")
     int32 GetMaxClusterHave() const;
 
     /** @public  **/
-    UFUNCTION(BlueprintPure, Category = "UWardenSettings")
+    UFUNCTION(BlueprintPure, Category = "API")
     float GetFreqCheckCluster() const;
 
     /** @public  **/
-    UFUNCTION(BlueprintPure, Category = "UWardenSettings")
+    UFUNCTION(BlueprintPure, Category = "API")
+    int32 GetStableFPS() const;
+
+    /** @public  **/
+    UFUNCTION(BlueprintPure, Category = "API")
     static int32 GetMaxClusterHaveStatic();
 
     /** @public  **/
-    UFUNCTION(BlueprintPure, Category = "UWardenSettings")
+    UFUNCTION(BlueprintPure, Category = "API")
     static float GetFreqCheckClusterStatic();
+
+    /** @public  **/
+    UFUNCTION(BlueprintPure, Category = "API")
+    static float GetStableFPSStatic();
     
 private:
 
@@ -41,5 +49,9 @@ private:
     /** @private **/
     UPROPERTY(Config, EditAnywhere, Category = "General", meta = (ClampMin = "0.1", ForceUnits = "s"))
     float FreqCheckCluster{0.1f};
+
+    /** @private **/
+    UPROPERTY(Config, EditAnywhere, Category = "General", meta = (ClampMin = "15", ClampMax = "120"))
+    int32 StableFPS{60};
 
 };

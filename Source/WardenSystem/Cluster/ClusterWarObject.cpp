@@ -4,15 +4,18 @@
 #include "ClusterWarObject.h"
 #include "WardenSystem/Settings/WardenSettings.h"
 
+void UClusterWarObject::Tick(float Time)
+{
+    CallTime += Time;
+    if (CallTime >= UWardenSettings::GetFreqCheckClusterStatic())
+    {
+        VerifyCluster();
+    }
+}
+
 void UClusterWarObject::RunCluster()
 {
     LOG_WARDEN_SYSTEM(Display, "Run cluster: [%s]", *GetName());
-
-    const float Freq = UWardenSettings::GetFreqCheckClusterStatic();
-    if (GetWorld() && Freq != 0.0f)
-    {
-        GetWorld()->GetTimerManager().SetTimer(TimerHandle_VerifyCluster, this, &ThisClass::VerifyCluster, Freq, true);
-    }
 }
 
 void UClusterWarObject::RegisterClusterData(const FString& TagCluster, FClusterData_WS& Data)
@@ -47,7 +50,6 @@ void UClusterWarObject::UnRegisterClusterData(const FString& TagCluster, UObject
 void UClusterWarObject::UnRegisterClusterTag(const FString& TagCluster)
 {
     LOG_WARDEN_SYSTEM(Display, "Tag cluster: [%s]", *TagCluster);
-    ArrayIndexCluster.Remove(TagCluster);
     ClusterContainer.Remove(TagCluster);
 }
 
@@ -97,23 +99,29 @@ FString UClusterWarObject::GetDrawDebugInfo()
 FString UClusterWarObject::GetDrawDebugVerify()
 {
     FString Key = TEXT("None");
-    if (ArrayIndexCluster.IsValidIndex(TargetIndex))
+    TArray<FString> ArrayKeys;
+    ClusterContainer.GetKeys(ArrayKeys);
+    if (ArrayKeys.IsValidIndex(TargetIndex))
     {
-        Key = ArrayIndexCluster[TargetIndex];
+        Key = ArrayKeys[TargetIndex];
     }
 
-    return FString::Printf(TEXT("    TargetIndex: [%i] | Key: [%s]\n"), TargetIndex, *Key);
+    return FString::Printf(TEXT("    TargetIndex: [%i] | Key: [%s] | CallTime: [%f]\n"), TargetIndex, *Key, CallTime);
 }
 
 void UClusterWarObject::VerifyCluster()
 {
-    if (!ArrayIndexCluster.IsValidIndex(TargetIndex))
+    CallTime = 0.0f;
+    TArray<FString> ArrayKeys;
+    ClusterContainer.GetKeys(ArrayKeys);
+
+    if (!ArrayKeys.IsValidIndex(TargetIndex))
     {
         TargetIndex = 0;
     }
-    if (!ArrayIndexCluster.IsValidIndex(TargetIndex)) return;
+    if (!ArrayKeys.IsValidIndex(TargetIndex)) return;
 
-    const FString Key = ArrayIndexCluster[TargetIndex];
+    const FString Key = ArrayKeys[TargetIndex];
     if (ClusterContainer.Contains(Key))
     {
         ClusterContainer[Key].RemoveAll([](const FClusterData_WS& Data)
@@ -126,7 +134,7 @@ void UClusterWarObject::VerifyCluster()
         }
     }
 
-    if (ArrayIndexCluster.IsValidIndex(TargetIndex + 1))
+    if (ArrayKeys.IsValidIndex(TargetIndex + 1))
     {
         ++TargetIndex;
     }

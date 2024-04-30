@@ -13,6 +13,11 @@ float UWardenSettings::GetFreqCheckCluster() const
     return FreqCheckCluster;
 }
 
+int32 UWardenSettings::GetStableFPS() const
+{
+    return StableFPS;
+}
+
 int32 UWardenSettings::GetMaxClusterHaveStatic()
 {
     if (const UWardenSettings* WardenSettings = GetDefault<UWardenSettings>())
@@ -29,4 +34,13 @@ float UWardenSettings::GetFreqCheckClusterStatic()
         return WardenSettings->GetFreqCheckCluster();
     }
     return 0.0f;
+}
+
+float UWardenSettings::GetStableFPSStatic()
+{
+    if (const UWardenSettings* WardenSettings = GetDefault<UWardenSettings>())
+    {
+        return WardenSettings->GetStableFPS();
+    }
+    return INDEX_NONE;
 }

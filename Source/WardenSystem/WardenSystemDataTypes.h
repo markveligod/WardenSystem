@@ -9,13 +9,16 @@ namespace WardenSystemSpace
 {
 inline bool IsLogPrint()
 {
+    const IConsoleVariable* WardenSystemSpaceShowLog = IConsoleManager::Get().FindConsoleVariable(TEXT("WardenSystem.ShowLog"));
+    if (WardenSystemSpaceShowLog)
+    {
 #if WITH_EDITOR
-    return true;
+        return true;
+#else
+        return WardenSystemSpaceShowLog->GetBool();
 #endif
-#if !UE_BUILD_SHIPPING
-    const auto WardenSystemSpaceShowLog = IConsoleManager::Get().FindConsoleVariable(TEXT("WardenSystem.ShowLog"));
-    return WardenSystemSpaceShowLog ? WardenSystemSpaceShowLog->GetBool() : false;
-#endif
+    }
+
     return false;
 }
 

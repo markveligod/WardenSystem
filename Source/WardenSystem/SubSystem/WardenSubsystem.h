@@ -28,6 +28,7 @@ public:
 
 	// FTickableGameObject implementation Begin
 	virtual void Tick(float DeltaTime) override;
+    virtual bool IsTickableInEditor() const override;
 	virtual TStatId GetStatId() const override;
 	// FTickableGameObject implementation End
 
@@ -43,34 +44,42 @@ public:
 public:
 
     /** @public Registering a cluster with a delegate timer. ONLY with UObject **/
-    void RegisterClusterDataTimerDelegate(const FString& TagCluster, FTimerDelegate TimerDelegate);
+    void RegisterClusterDataTimerDelegate(const FString& TagCluster, const FTimerDelegate& TimerDelegate);
 
     /** @public Registering a cluster with a delegate timer STATIC. ONLY with UObject **/
-    static void RegisterClusterDataTimerDelegateStatic(UObject* WorldContextObject, const FString& TagCluster, FTimerDelegate TimerDelegate);
+    static void RegisterClusterDataTimerDelegateStatic(UObject* WorldContextObject, const FString& TagCluster, const FTimerDelegate& TimerDelegate);
 
     /** @public Registering a cluster with a delegate callback. ONLY with UObject **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    UFUNCTION(BlueprintCallable, Category = "API")
     void RegisterClusterDataCallback(FString TagCluster, FWSCallbackSignature Callback);
 
     /** @public Registering a cluster with a delegate callback STATIC. ONLY with UObject **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    UFUNCTION(BlueprintCallable, Category = "API", meta = (WorldContext = "WorldContextObject"))
     static void RegisterClusterDataCallbackStatic(UObject* WorldContextObject, FString TagCluster, FWSCallbackSignature Callback);
-    
+
     /** @public Removing a cluster from verification **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    UFUNCTION(BlueprintCallable, Category = "API")
     void UnRegisterClusterTag(FString TagCluster);
 
     /** @public Removing a cluster from verification STATIC **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    UFUNCTION(BlueprintCallable, Category = "API", meta = (WorldContext = "WorldContextObject"))
     static void UnRegisterClusterTagStatic(UObject* WorldContextObject, FString TagCluster);
 
     /** @public Removing a cluster from verification **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem")
+    UFUNCTION(BlueprintCallable, Category = "API")
     void UnRegisterClusterTagByObject(FString TagCluster, UObject* Object);
 
     /** @public Removing a cluster from verification STATIC **/
-    UFUNCTION(BlueprintCallable, Category = "UWardenSubsystem", meta = (WorldContext = "WorldContextObject"))
+    UFUNCTION(BlueprintCallable, Category = "API", meta = (WorldContext = "WorldContextObject"))
     static void UnRegisterClusterTagByObjectStatic(UObject* WorldContextObject, FString TagCluster, UObject* Object);
+
+    /** @public Finding an existing cluster by tag **/
+    UFUNCTION(BlueprintCallable, Category = "API")
+    bool IsExistClusterByTag(FString TagCluster);
+
+    /** @public Finding an existing cluster by tag STATIC **/
+    UFUNCTION(BlueprintCallable, Category = "API", meta = (WorldContext = "WorldContextObject"))
+    static bool IsExistClusterByTagStatic(UObject* WorldContextObject, FString TagCluster);
 
 private:
 
@@ -92,6 +101,7 @@ private:
 
 private:
 
+    /** @private  **/
     UPROPERTY()
     TArray<UClusterWarObject*> ClusterWarObjects;
     
