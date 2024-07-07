@@ -18,6 +18,11 @@ int32 UWardenSettings::GetStableFPS() const
     return StableFPS;
 }
 
+EModeRunThreadCluster UWardenSettings::GetModeRunThreadCluster() const
+{
+    return ModeRunThread;
+}
+
 int32 UWardenSettings::GetMaxClusterHaveStatic()
 {
     if (const UWardenSettings* WardenSettings = GetDefault<UWardenSettings>())
@@ -43,4 +48,13 @@ float UWardenSettings::GetStableFPSStatic()
         return WardenSettings->GetStableFPS();
     }
     return INDEX_NONE;
+}
+
+EModeRunThreadCluster UWardenSettings::GetModeRunThreadClusterStatic()
+{
+    if (const UWardenSettings* WardenSettings = GetDefault<UWardenSettings>())
+    {
+        return WardenSettings->GetModeRunThreadCluster();
+    }
+    return EModeRunThreadCluster::GameThread;
 }

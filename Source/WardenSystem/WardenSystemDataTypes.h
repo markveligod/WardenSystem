@@ -53,6 +53,13 @@ enum class ETypeExecuteFunc_WS: uint8
     Callback,
 };
 
+UENUM()
+enum class EModeRunThreadCluster: uint8
+{
+    GameThread,
+    OtherThread,
+};
+
 struct FClusterData_WS
 {
     ETypeExecuteFunc_WS Type{ETypeExecuteFunc_WS::TimerDelegate};
@@ -116,4 +123,12 @@ struct FClusterData_WS
         return FString::Printf(TEXT("Type: [%s] | TimerDelegate: [%s] | CallBack: [%s]"),
             *UEnum::GetValueAsString(Type), *GetNameSafe(TimerDelegate.GetUObject()), *GetNameSafe(CallBack.GetUObject()));
     }
+};
+
+struct FInitClusterThreadParams
+{
+    TWeakObjectPtr<UObject> Owner{nullptr};
+    float TimeSleep{0.5f};
+    int32 TargetIndex{0};
+    TMap<FString, TArray<FClusterData_WS>> ClusterContainer;
 };

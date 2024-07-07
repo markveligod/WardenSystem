@@ -7,6 +7,7 @@
 #include "WardenSystem/WardenSystemDataTypes.h"
 #include "WardenSubsystem.generated.h"
 
+class FClusterWarThread;
 class UClusterWarObject;
 /**
  * @class The system implies control over clustering with callbacks
@@ -88,12 +89,21 @@ private:
 
     /** @private  **/
     UClusterWarObject* FindExistClusterWarObject(const FString& TagCluster = TEXT(""));
+
+    /** @private  **/
+    TSharedPtr<FClusterWarThread> FindClusterWarThread(const FString& TagCluster);
+
+    /** @private  **/
+    TSharedPtr<FClusterWarThread> FindExistClusterWarThread(const FString& TagCluster = TEXT(""));
     
     /** @private  **/
     void RegisterCluster_Internal(const FString& TagCluster, FClusterData_WS& Data);
 
     /** @private  **/
-    UClusterWarObject* CreateNewCluster();
+    UClusterWarObject* CreateNewClusterWarObject();
+
+    /** @private  **/
+    TSharedPtr<FClusterWarThread> CreateNewClusterWarThread();
 
 #pragma endregion
 
@@ -104,6 +114,9 @@ private:
     /** @private  **/
     UPROPERTY()
     TArray<UClusterWarObject*> ClusterWarObjects;
+
+    /** @private **/
+    TArray<TSharedPtr<FClusterWarThread>> ClusterWarThreads;
     
 #pragma endregion
 };

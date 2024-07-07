@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "WardenSystem/WardenSystemDataTypes.h"
 #include "WardenSettings.generated.h"
 
 /**
@@ -30,6 +31,10 @@ public:
 
     /** @public  **/
     UFUNCTION(BlueprintPure, Category = "API")
+    EModeRunThreadCluster GetModeRunThreadCluster() const;
+
+    /** @public  **/
+    UFUNCTION(BlueprintPure, Category = "API")
     static int32 GetMaxClusterHaveStatic();
 
     /** @public  **/
@@ -39,6 +44,10 @@ public:
     /** @public  **/
     UFUNCTION(BlueprintPure, Category = "API")
     static float GetStableFPSStatic();
+
+    /** @public  **/
+    UFUNCTION(BlueprintPure, Category = "API")
+    static EModeRunThreadCluster GetModeRunThreadClusterStatic();
     
 private:
 
@@ -54,4 +63,7 @@ private:
     UPROPERTY(Config, EditAnywhere, Category = "General", meta = (ClampMin = "15", ClampMax = "120"))
     int32 StableFPS{60};
 
+    /** @private **/
+    UPROPERTY(Config, EditAnywhere, Category = "General")
+    EModeRunThreadCluster ModeRunThread{EModeRunThreadCluster::GameThread};
 };

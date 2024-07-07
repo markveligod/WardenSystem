@@ -5,6 +5,7 @@
 
 #include "Algo/ForEach.h"
 #include "WardenSystem/Cluster/ClusterWarObject.h"
+#include "WardenSystem/Cluster/ClusterWarThread.h"
 #include "WardenSystem/Settings/WardenSettings.h"
 
 #pragma region Default
@@ -44,15 +45,33 @@ void UWardenSubsystem::Tick(float DeltaTime)
     if (WardenSystemShowData && WardenSystemShowData->GetBool() && GEngine && GetWorld() && !GetWorld()->IsNetMode(NM_DedicatedServer))
     {
         GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("--- | END WardenSystem.ShowData | ---"));
-        for (int32 i = 0; i < ClusterWarObjects.Num(); ++i)
+        if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
         {
-            UClusterWarObject* Cluster = ClusterWarObjects[i];
-            if (!Cluster) continue;
+            for (int32 i = 0; i < ClusterWarObjects.Num(); ++i)
+            {
+                UClusterWarObject* Cluster = ClusterWarObjects[i];
+                if (!Cluster) continue;
 
-            FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
-            Info.Append(Cluster->GetDrawDebugInfo());
-            GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+                FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
+                Info.Append(Cluster->GetDrawDebugInfo());
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+            }
         }
+        if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+        {
+            for (int32 i = 0; i < ClusterWarThreads.Num(); ++i)
+            {
+                auto Thread = ClusterWarThreads[i];
+                if (!Thread.IsValid()) continue;
+
+                FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
+                Thread->LockMutexData();
+                Info.Append(Thread->GetDrawDebugInfo());
+                Thread->UnLockMutexData();
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+            }
+        }
+        
         GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("--- | START WardenSystem.ShowData | ---"));
     }
 
@@ -60,15 +79,33 @@ void UWardenSubsystem::Tick(float DeltaTime)
     if (WardenSystemShowVerify && WardenSystemShowVerify->GetBool() && GEngine && GetWorld() && !GetWorld()->IsNetMode(NM_DedicatedServer))
     {
         GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("--- | END WardenSystem.ShowVerify | ---"));
-        for (int32 i = 0; i < ClusterWarObjects.Num(); ++i)
+        if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
         {
-            UClusterWarObject* Cluster = ClusterWarObjects[i];
-            if (!Cluster) continue;
+            for (int32 i = 0; i < ClusterWarObjects.Num(); ++i)
+            {
+                UClusterWarObject* Cluster = ClusterWarObjects[i];
+                if (!Cluster) continue;
 
-            FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
-            Info.Append(Cluster->GetDrawDebugVerify());
-            GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+                FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
+                Info.Append(Cluster->GetDrawDebugVerify());
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+            }
         }
+        if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+        {
+            for (int32 i = 0; i < ClusterWarThreads.Num(); ++i)
+            {
+                auto Thread = ClusterWarThreads[i];
+                if (!Thread.IsValid()) continue;
+
+                FString Info = FString::Printf(TEXT("Index cluster: [%i]\n"), i);
+                Thread->LockMutexData();
+                Info.Append(Thread->GetDrawDebugVerify());
+                Thread->UnLockMutexData();
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Info);
+            }
+        }
+        
         GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("--- | START WardenSystem.ShowVerify | ---"));
     }
 #endif
@@ -93,6 +130,13 @@ void UWardenSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UWardenSubsystem::Deinitialize()
 {
     Super::Deinitialize();
+
+    ClusterWarObjects.Empty();
+    for (auto Thread : ClusterWarThreads)
+    {
+        Thread->EnsureCompletion();
+    }
+    ClusterWarThreads.Empty();
 }
 
 #pragma endregion
@@ -142,9 +186,22 @@ void UWardenSubsystem::RegisterClusterDataCallbackStatic(UObject* WorldContextOb
 
 void UWardenSubsystem::UnRegisterClusterTag(FString TagCluster)
 {
-    if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
     {
-        ClusterWarObject->UnRegisterClusterTag(TagCluster);
+        if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
+        {
+            ClusterWarObject->UnRegisterClusterTag(TagCluster);
+        }
+    }
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+    {
+        TSharedPtr<FClusterWarThread> Thread = FindClusterWarThread(TagCluster);
+        if (Thread.IsValid())
+        {
+            Thread->LockMutexData();
+            Thread->UnRegisterClusterTag(TagCluster);
+            Thread->UnLockMutexData();
+        }
     }
 }
 
@@ -161,9 +218,22 @@ void UWardenSubsystem::UnRegisterClusterTagByObject(FString TagCluster, UObject*
     if (CLOG_WARDEN_SYSTEM(!Object, "Object is nullptr")) return;
     if (CLOG_WARDEN_SYSTEM(TagCluster.IsEmpty(), "Tag cluster is empty")) return;
 
-    if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
     {
-        ClusterWarObject->UnRegisterClusterData(TagCluster, Object);
+        if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
+        {
+            ClusterWarObject->UnRegisterClusterData(TagCluster, Object);
+        }
+    }
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+    {
+        TSharedPtr<FClusterWarThread> Thread = FindClusterWarThread(TagCluster);
+        if (Thread.IsValid())
+        {
+            Thread->LockMutexData();
+            Thread->UnRegisterClusterData(TagCluster, Object);
+            Thread->UnLockMutexData();
+        }
     }
 }
 
@@ -177,14 +247,22 @@ void UWardenSubsystem::UnRegisterClusterTagByObjectStatic(UObject* WorldContextO
 
 bool UWardenSubsystem::IsExistClusterByTag(FString TagCluster)
 {
-    return FindClusterWarObject(TagCluster) != nullptr;
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
+    {
+        return FindClusterWarObject(TagCluster) != nullptr;
+    }
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+    {
+        return FindClusterWarThread(TagCluster).IsValid();
+    }
+    return false;
 }
 
 bool UWardenSubsystem::IsExistClusterByTagStatic(UObject* WorldContextObject, FString TagCluster)
 {
     if (UWardenSubsystem* WardenSubsystem = UWardenSubsystem::GetWardenSubsystemSingleton(WorldContextObject))
     {
-        return WardenSubsystem->FindClusterWarObject(TagCluster) != nullptr;
+        return WardenSubsystem->IsExistClusterByTag(TagCluster);
     }
     return false;
 }
@@ -220,7 +298,47 @@ UClusterWarObject* UWardenSubsystem::FindExistClusterWarObject(const FString& Ta
             return Cluster;
         }
     }
-    return CreateNewCluster();
+    return CreateNewClusterWarObject();
+}
+
+TSharedPtr<FClusterWarThread> UWardenSubsystem::FindClusterWarThread(const FString& TagCluster)
+{
+    for (auto Thread : ClusterWarThreads)
+    {
+        if (!Thread.IsValid()) continue;
+        Thread->LockMutexData();
+        if (Thread->IsContainsClusterTag(TagCluster))
+        {
+            Thread->UnLockMutexData();
+            return Thread;
+        }
+        Thread->UnLockMutexData();
+    }
+    return {};
+}
+
+TSharedPtr<FClusterWarThread> UWardenSubsystem::FindExistClusterWarThread(const FString& TagCluster)
+{
+    if (!TagCluster.IsEmpty())
+    {
+        if (TSharedPtr<FClusterWarThread> ClusterWarThread = FindClusterWarThread(TagCluster))
+        {
+            return ClusterWarThread;
+        }
+    }
+
+    for (auto Thread : ClusterWarThreads)
+    {
+        if (!Thread.IsValid()) continue;
+        Thread->LockMutexData();
+        if (Thread->IsHaveFreeSlots())
+        {
+            Thread->UnLockMutexData();
+            return Thread;
+        }
+        Thread->UnLockMutexData();
+    }
+    return CreateNewClusterWarThread();
 }
 
 void UWardenSubsystem::RegisterCluster_Internal(const FString& TagCluster, FClusterData_WS& Data)
@@ -228,21 +346,48 @@ void UWardenSubsystem::RegisterCluster_Internal(const FString& TagCluster, FClus
     if (CLOG_WARDEN_SYSTEM(!Data.IsValidData(), "Data: [%s] is not valid", *Data.ToString())) return;
 
     LOG_WARDEN_SYSTEM(Display, "TagCluster: [%s] | Data: [%s]", *TagCluster, *Data.ToString());
-    UClusterWarObject* ClusterWarObject = FindExistClusterWarObject(TagCluster);
-    if (CLOG_WARDEN_SYSTEM(!ClusterWarObject, "FIND/CREATED CLUSTER IS FAILED")) return;
-    ClusterWarObject->RegisterClusterData(TagCluster, Data);
+
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
+    {
+        UClusterWarObject* ClusterWarObject = FindExistClusterWarObject(TagCluster);
+        if (CLOG_WARDEN_SYSTEM(!ClusterWarObject, "FIND/CREATED CLUSTER OBJECT IS FAILED")) return;
+        ClusterWarObject->RegisterClusterData(TagCluster, Data);
+    }
+    if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::OtherThread)
+    {
+        TSharedPtr<FClusterWarThread> Thread = FindExistClusterWarThread(TagCluster);
+        if (CLOG_WARDEN_SYSTEM(!Thread.IsValid(), "FIND/CREATED CLUSTER THREAD IS FAILED")) return;
+        Thread->LockMutexData();
+        Thread->RegisterClusterData(TagCluster, Data);
+        Thread->UnLockMutexData();
+    }
 }
 
-UClusterWarObject* UWardenSubsystem::CreateNewCluster()
+UClusterWarObject* UWardenSubsystem::CreateNewClusterWarObject()
 {
     UClusterWarObject* Cluster = NewObject<UClusterWarObject>(this, UClusterWarObject::StaticClass());
     if (Cluster)
     {
-        LOG_WARDEN_SYSTEM(Display, "Create new cluster: [%s]", *Cluster->GetName());
+        LOG_WARDEN_SYSTEM(Display, "Create new cluster object: [%s]", *Cluster->GetName());
         Cluster->RunCluster();
         ClusterWarObjects.Add(Cluster);
     }
     return Cluster;
+}
+
+TSharedPtr<FClusterWarThread> UWardenSubsystem::CreateNewClusterWarThread()
+{
+    FInitClusterThreadParams InitParams;
+    InitParams.Owner = this;
+    InitParams.TimeSleep = UWardenSettings::GetFreqCheckClusterStatic();
+    TSharedPtr<FClusterWarThread> SomeThread = MakeShared<FClusterWarThread>(InitParams);
+    if (SomeThread.IsValid())
+    {
+        LOG_WARDEN_SYSTEM(Display, "Create new cluster thread: [%s]", *SomeThread->GetName());
+        ClusterWarThreads.Add(SomeThread);
+    }
+
+    return SomeThread;
 }
 
 #pragma endregion
