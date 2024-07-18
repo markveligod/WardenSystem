@@ -11,6 +11,13 @@ Supported versions of the Unreal Engine: UE5.(0-4)
 
 ![Image](https://github.com/markveligod/WardenSystem/blob/main/Assets/API.png)  
 
+## Threads
+Since version 1.3, I have added a cluster on a other thread and switching is done in Project Settings -> Game -> WardenSettings.  
+Attention!!!  
+Unreal Engine works very poorly on other threads with actor spawning, object creation, etc.  Be careful when using the system on a separate thread  
+By default, I have set cluster processing to GameThread  
+
+
 ## 📫 Other <a name="Other"></a>
 :bangbang: Attention: If you can improve my trash code then make a pull request.  
 
