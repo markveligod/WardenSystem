@@ -27,6 +27,8 @@ UWardenSubsystem* UWardenSubsystem::GetWardenSubsystemSingleton(UObject* Context
 
 void UWardenSubsystem::Tick(float DeltaTime)
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_Tick, FColor::Orange);
+
     Super::Tick(DeltaTime);
 
     const int32 StableFPS = UWardenSettings::GetStableFPSStatic();
@@ -186,6 +188,8 @@ void UWardenSubsystem::RegisterClusterDataCallbackStatic(UObject* WorldContextOb
 
 void UWardenSubsystem::UnRegisterClusterTag(FString TagCluster)
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_UnRegisterClusterTag, FColor::Orange);
+
     if (UWardenSettings::GetModeRunThreadClusterStatic() == EModeRunThreadCluster::GameThread)
     {
         if (UClusterWarObject* ClusterWarObject = FindClusterWarObject(TagCluster))
@@ -215,6 +219,8 @@ void UWardenSubsystem::UnRegisterClusterTagStatic(UObject* WorldContextObject, F
 
 void UWardenSubsystem::UnRegisterClusterTagByObject(FString TagCluster, UObject* Object)
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_UnRegisterClusterTagByObject, FColor::Orange);
+
     if (CLOG_WARDEN_SYSTEM(!Object, "Object is nullptr")) return;
     if (CLOG_WARDEN_SYSTEM(TagCluster.IsEmpty(), "Tag cluster is empty")) return;
 
@@ -343,6 +349,8 @@ TSharedPtr<FClusterWarThread> UWardenSubsystem::FindExistClusterWarThread(const 
 
 void UWardenSubsystem::RegisterCluster_Internal(const FString& TagCluster, FClusterData_WS& Data)
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_RegisterCluster, FColor::Orange);
+
     if (CLOG_WARDEN_SYSTEM(!Data.IsValidData(), "Data: [%s] is not valid", *Data.ToString())) return;
 
     LOG_WARDEN_SYSTEM(Display, "TagCluster: [%s] | Data: [%s]", *TagCluster, *Data.ToString());
@@ -365,6 +373,8 @@ void UWardenSubsystem::RegisterCluster_Internal(const FString& TagCluster, FClus
 
 UClusterWarObject* UWardenSubsystem::CreateNewClusterWarObject()
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_CreateNewClusterWarObject, FColor::Orange);
+
     UClusterWarObject* Cluster = NewObject<UClusterWarObject>(this, UClusterWarObject::StaticClass());
     if (Cluster)
     {
@@ -377,6 +387,8 @@ UClusterWarObject* UWardenSubsystem::CreateNewClusterWarObject()
 
 TSharedPtr<FClusterWarThread> UWardenSubsystem::CreateNewClusterWarThread()
 {
+    SCOPED_NAMED_EVENT(UWardenSubsystem_CreateNewClusterWarThread, FColor::Orange);
+
     FInitClusterThreadParams InitParams;
     InitParams.Owner = this;
     InitParams.TimeSleep = UWardenSettings::GetFreqCheckClusterStatic();

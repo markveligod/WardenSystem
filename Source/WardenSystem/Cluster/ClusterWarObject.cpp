@@ -111,6 +111,8 @@ FString UClusterWarObject::GetDrawDebugVerify()
 
 void UClusterWarObject::VerifyCluster()
 {
+    SCOPED_NAMED_EVENT(UClusterWarObject_VerifyCluster, FColor::Orange);
+
     CallTime = 0.0f;
     TArray<FString> ArrayKeys;
     ClusterContainer.GetKeys(ArrayKeys);

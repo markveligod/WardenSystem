@@ -57,7 +57,7 @@ void FClusterWarThread::Stop()
 {
     LOG_WARDEN_SYSTEM(Display, "Thread: [%s] | Stop cluster thread", *GetName());
 
-    Kill = true; //Thread kill condition "while (!m_Kill){...}"
+    Kill = true; //Thread kill condition 
     if (Semaphore)
     {
         //We shall signal "Trigger" the FEvent (in case the Thread is sleeping it shall wake up!!)
@@ -193,6 +193,8 @@ FString FClusterWarThread::GetDrawDebugVerify()
 
 void FClusterWarThread::VerifyCluster()
 {
+    SCOPED_NAMED_EVENT(FClusterWarThread_VerifyCluster, FColor::Orange);
+
     TArray<FString> ArrayKeys;
     Params.ClusterContainer.GetKeys(ArrayKeys);
 
